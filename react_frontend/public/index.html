@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Web site created using create-react-app"
+    />
+    <script src="./scripts/jquery-3.7.0.min.js"></script>
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <!--
+      manifest.json provides metadata used when your web app is installed on a
+      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
+    -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <link rel="stylesheet" href="%PUBLIC_URL%/styles.css" />
+    <!--
+      Notice the use of %PUBLIC_URL% in the tags above.
+      It will be replaced with the URL of the `public` folder during the build.
+      Only files inside the `public` folder can be referenced from the HTML.
+
+      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
+      work correctly both with client-side routing and a non-root public URL.
+      Learn how to configure a non-root public URL by running `npm run build`.
+    -->
+    <title>Suri Bot</title>
+    <script type="text/javascript">
+      
+      window.GlobalInputIndex = 0;
+
+      ScrollToEnd = function(){
+        $('html, body').animate({ scrollTop: $(document).height() }, 'slow');
+      };
+      
+      CreateQuery = function(queryText, queryTime) {
+        window.GlobalInputIndex++;
+        var newHistoryQuery = $('#historyQuery').clone();
+        newHistoryQuery.attr('id', 'previousQuery_' + window.GlobalInputIndex.toString());
+        newHistoryQuery.find('div[id="queryContext"]').text(queryText);
+        var newQPT = $('#historyQueryPosttime').clone()
+        newQPT.attr('id', 'previousQueryTime_' + window.GlobalInputIndex.toString())
+        newQPT.text(queryTime);
+
+        if($('div[id^="previousQuery_"]').length > 0){
+          $('#resultPanel').append($('<div style="width: 100%;flex-shrink: 0;padding-top:20px;padding-bottom:10px;"><svg xmlns="http://www.w3.org/2000/svg" width="677" height="2" viewBox="0 0 677 2" fill="none"><path d="M0.5 1H676.5" stroke="#D7D7D7"/></svg></div>'));
+        }
+
+        $('#resultPanel').append(newHistoryQuery);
+        $('#resultPanel').append(newQPT);
+        $('#secondInputText').val('');
+      };
+
+      CreateAnswer = function(queryText, queryTime) {
+        $('div[isreal="1"]').find('.answerContextBG').each(function(){
+          $(this).removeClass('answerContextBG');
+          $(this).addClass('answerContextBGGray');
+        });
+        
+        var rndID = GenerateRandomString();
+        var newHistoryAnswer = $('#historyAnswer').clone();
+        newHistoryAnswer.attr('isreal','1');
+        newHistoryAnswer.attr('id', 'previousAnswer_' + window.GlobalInputIndex.toString());
+        newHistoryAnswer.find('p[id="responsecontext"]').text(queryText);
+        newHistoryAnswer.find('p[id="responsecontext"]').attr('id','responsecontext_' + rndID);
+        newHistoryAnswer.find('#btnCopy').attr('contextID','responsecontext_'+rndID).attr('onClick','CopyToClipboard(this)');
+        var newAPT = $('#historyAnswerPosttime').clone();
+        newAPT.attr('id', 'previousAnswerTime_' + window.GlobalInputIndex.toString())
+        newAPT.text(queryTime);
+        $('#resultPanel').append(newHistoryAnswer);
+        $('#resultPanel').append(newAPT);
+      };
+
+      CreateSource = function(sourceElems) {
+        var eleID = '#previousAnswer_' + window.GlobalInputIndex.toString();
+        var element = $(eleID);
+        if(element.length==0) return;
+
+        if(sourceElems.length>0)
+        {
+          element.find('div[id="sourcesTitle"]').show();
+          var lastContext = element.find('#answerContext');
+
+          sourceElems.forEach((sourceElem) => {
+            var rndID = GenerateRandomString();
+            var template = $('#sourceTemplate').clone();            
+            var innerHTML = 
+            "<div class='sourceHeader'>" +
+              "<div class='sourcesTitleContainer'><p>" + sourceElem.props['children'][0].props['children'].toString() + "</p></div>" +
+              "<img src='./images/download.png' alt='Download' class='downloadIcon' data-document-id='" + sourceElem.props['children'][0].props['children'].toString() + ".docx' onclick='handleDownload(this.getAttribute(\"data-document-id\"))' />" +
+            "</div>" +
+            "<div>" +
+              "<p id='txt_" + rndID + "' class='sourceContentText'>" + sourceElem.props['children'][1].props['children'].toString() + "</p>" +
+              "<span class='sourceContentTips'>" + sourceElem.props['children'][2].props['children'].toString() + "</span>" + 
+            "</div>";
+            
+            template.html(innerHTML);
+            lastContext.append(template);
+          });
+        };
+      }
+
+      PostForm = function(){
+        setTimeout(function(){
+          $('#submitUpload').click();
+        },500);
+      }
+
+      ChangeKeyframe = function(ruleName, newText) {
+        var styleSheet = document.styleSheets[0];
+        var keyframesRule = null;
+
+        for (var i = 0; i < styleSheet.cssRules.length; i++) {
+          var rule = styleSheet.cssRules[i];
+          if (rule.name === ruleName) {
+            keyframesRule = rule;
+            break;
+          }
+        }
+
+        if (keyframesRule) {
+          keyframesRule.cssText = newText;
+        }
+      }
+
+      GenerateRandomString = function() {
+        var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+        var randomString = '';
+        var length = 6;
+
+        for (var i = 0; i < length; i++) {
+          var randomIndex = Math.floor(Math.random() * characters.length);
+          randomString += characters.charAt(randomIndex);
+        }
+
+        return randomString;
+      }
+
+      InsertWrongMessage = function(fileName, message) {
+        var newID = GenerateRandomString();
+        var newMsg = '<div id="' + newID + '" class="UploadFailTips">';
+        newMsg += '<div>';
+        newMsg += '<svg xmlns="http://www.w3.org/2000/svg" width="21" height="22" viewBox="0 0 21 22" fill="none"><circle cx="10.5" cy="11" r="9.75" stroke="#E01C4B" stroke-width="1.5"/><rect x="9.88232" y="4.20587" width="1.85294" height="8.64706" rx="0.926471" fill="#E01C4B"/><rect x="9.88232" y="15.3235" width="1.85294" height="1.85294" rx="0.926471" fill="#E01C4B"/></svg>';
+        newMsg += '</div>';
+        newMsg += `<div>${fileName} ${message}. </div>`;
+        $('#documentPanel').append(newMsg);
+        SlideUpAndDown(newID, '200px', true);
+    }
+    
+
+      SlideUpAndDown = function(id, moveTo, autoDelete) {
+        var element = $('#'+id);
+        var currentBottomValue = element.css('bottom');
+        var slideUpDuration = 1000;
+        var slideDownDuration = 1000;
+        var delayDuration = 3000;
+        element.animate({bottom: moveTo}, slideUpDuration, function() {
+          setTimeout(function() {
+            element.animate({bottom: currentBottomValue}, slideDownDuration, function(){
+              if(autoDelete){
+                element.remove();
+              }
+            });
+          }, delayDuration);
+        });
+      }
+
+      CopyToClipboard = function(objBTN) {
+    var targetID = $(objBTN).attr('contextID');
+    const textToCopy = $('#' + targetID).text();
+
+    const textarea = document.createElement('textarea');
+    textarea.value = textToCopy;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'absolute';
+    textarea.style.left = '-9999px';
+
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+
+    // Animation part
+    $(objBTN).addClass('active');
+    setTimeout(() => {
+        $(objBTN).removeClass('active');
+    }, 500); // Reverts back to the original image after 0.5 seconds. Adjust as necessary.
+
+    console.log('Copied!');
+}
+
+const handleDownload = (docId) => {
+  // use the backend localhost. 
+  const backendBaseUrl = 'http://localhost:4103';
+
+  const downloadUrl = `${backendBaseUrl}/downloadDocument/${docId}`;
+  const link = document.createElement('a');
+  link.href = downloadUrl;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+
+</script>
+  </head>
+  <body style="background-color: #F8F8F8;;">
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <!--
+      This HTML file is a template.
+      If you open it directly in the browser, you will see an empty page.
+
+      You can add webfonts, meta tags, or analytics to this file.
+      The build step will place the bundled scripts into the <body> tag.
+
+      To begin the development, run `npm start` or `yarn start`.
+      To create a production bundle, use `npm run build` or `yarn build`.
+    -->
+  </body>
+</html>

@@ -1,0 +1,17 @@
+.downloadIcon {
+    cursor: pointer;
+    width: 15px;
+    height: 15px;
+    margin-left: 10px;
+    transition: transform 0.2s; /* smooth transition for the transform property */
+}
+  
+.downloadIcon:hover {
+    animation: bounce 0.5s; /* apply the bounce animation on hover */
+}
+
+.sourceHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}

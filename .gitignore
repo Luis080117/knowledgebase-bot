@@ -1,0 +1,9 @@
+/saved_index
+/upload
+/postman_examples
+/.vscode
+/__pycache__
+stored_documents.pkl
+app.log
+.DS_Store
+/venv
